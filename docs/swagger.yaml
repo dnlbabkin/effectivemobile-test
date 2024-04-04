@@ -1,0 +1,162 @@
+basePath: /
+definitions:
+  effectivemobile-test_internal_dao.NewCar:
+    properties:
+      mark:
+        type: string
+      model:
+        type: string
+      owner:
+        properties:
+          name:
+            type: string
+          patronymic:
+            type: string
+          surname:
+            type: string
+        type: object
+      regNums:
+        items:
+          type: string
+        type: array
+      year:
+        type: integer
+    type: object
+  effectivemobile-test_internal_models.Car:
+    properties:
+      id:
+        type: integer
+      mark:
+        type: string
+      model:
+        type: string
+      owner:
+        $ref: '#/definitions/effectivemobile-test_internal_models.People'
+      owner_id:
+        type: integer
+      regNums:
+        items:
+          type: string
+        type: array
+      year:
+        type: integer
+    type: object
+  effectivemobile-test_internal_models.People:
+    properties:
+      cars:
+        items:
+          $ref: '#/definitions/effectivemobile-test_internal_models.Car'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      patronymic:
+        type: string
+      surname:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API для каталога новых автомобилей
+  title: Каталог новых автомобилей
+  version: "1.0"
+paths:
+  /addCar:
+    post:
+      consumes:
+      - application/json
+      description: Добавление новой машины в каталог
+      parameters:
+      - description: Данные о новой машине
+        in: body
+        name: newCar
+        required: true
+        schema:
+          $ref: '#/definitions/effectivemobile-test_internal_dao.NewCar'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Машина успешно добавлена
+        "400":
+          description: Некорректный запрос
+        "500":
+          description: Внутренняя ошибка сервера
+      summary: Добавление новой машины
+      tags:
+      - cars
+  /cars:
+    get:
+      description: Получение списка автомобилей с возможностью пагинации
+      parameters:
+      - description: Номер страницы (по умолчанию 1)
+        in: query
+        name: page
+        type: integer
+      - description: Максимальное количество записей на странице (по умолчанию 10)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Успешный запрос
+        "500":
+          description: Внутренняя ошибка сервера
+      summary: Получение списка автомобилей с возможностью пагинации
+      tags:
+      - cars
+  /delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаление записи о машине по идентификатору
+      parameters:
+      - description: Идентификатор машины
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Запись успешно удалена
+        "500":
+          description: Внутренняя ошибка сервера
+      summary: Удаление записи о машине по идентификатору
+      tags:
+      - cars
+  /update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Обновление данных о машине по идентификатору
+      parameters:
+      - description: Идентификатор машины
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Обновленные данные о машине
+        in: body
+        name: updatedCar
+        required: true
+        schema:
+          $ref: '#/definitions/effectivemobile-test_internal_models.Car'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Данные о машине успешно обновлены
+        "400":
+          description: Некорректный запрос
+        "500":
+          description: Внутренняя ошибка сервера
+      summary: Обновление данных о машине по идентификатору
+      tags:
+      - cars
+swagger: "2.0"

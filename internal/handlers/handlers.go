@@ -4,8 +4,10 @@ import (
 	"effectivemobile-test/internal/dao"
 	"effectivemobile-test/internal/database"
 	"effectivemobile-test/internal/models"
+	"effectivemobile-test/logs"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	_ "github.com/lib/pq"
 	"net/http"
 	"strconv"
 )
@@ -15,8 +17,10 @@ import (
 // @Tags cars
 // @Accept json
 // @Produce json
-// @Param car body Car true "Название машины и владельца"
-// @Success 201
+// @Param newCar body dao.NewCar true "Данные о новой машине"
+// @Success 201 "Машина успешно добавлена"
+// @Failure 400 "Некорректный запрос"
+// @Failure 500 "Внутренняя ошибка сервера"
 // @Router /addCar [post]
 func AddCar(w http.ResponseWriter, r *http.Request) {
 	db, err := database.ConnectDB()
@@ -26,6 +30,8 @@ func AddCar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer db.Close()
+
+	logger := logs.GetLogger()
 
 	var newCar dao.NewCar
 	if err := json.NewDecoder(r.Body).Decode(&newCar); err != nil {
@@ -52,17 +58,19 @@ func AddCar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Debug("Добавлен новый автомобиль")
+
 	w.WriteHeader(http.StatusCreated)
 }
 
-// @Summary Возвращение отфильтрованного списка машин
-// @Description Вазваращает данные с фильтрацией и пагинацией
+// @Summary Получение списка автомобилей с возможностью пагинации
+// @Description Получение списка автомобилей с возможностью пагинации
 // @Tags cars
-// @Accept json
 // @Produce json
-// @Param page query int false "Номер страницы для пагинации"
-// @Param limit query int false "Количество элементов на странице"
-// @Success 200 {array} Car
+// @Param page query int false "Номер страницы (по умолчанию 1)"
+// @Param limit query int false "Максимальное количество записей на странице (по умолчанию 10)"
+// @Success 200 "Успешный запрос"
+// @Failure 500 "Внутренняя ошибка сервера"
 // @Router /cars [get]
 func GetFilteredCars(w http.ResponseWriter, r *http.Request) {
 	db, err := database.ConnectDB()
@@ -72,6 +80,8 @@ func GetFilteredCars(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer db.Close()
+
+	logger := logs.GetLogger()
 
 	page := r.URL.Query().Get("page")
 	limit := r.URL.Query().Get("limit")
@@ -92,17 +102,21 @@ func GetFilteredCars(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
+	logger.Debug("Получен запрос на получение всех автомобилей")
+
 	json.NewEncoder(w).Encode(cars)
 }
 
-// @Summary Изменение данных по id
-// @Description Изменение одного или нескольких полей по id
+// @Summary Обновление данных о машине по идентификатору
+// @Description Обновление данных о машине по идентификатору
 // @Tags cars
 // @Accept json
 // @Produce json
-// @Param id path string true "id машины"
-// @Param car body Car true "Поле для обновления"
-// @Success 200
+// @Param id path string true "Идентификатор машины"
+// @Param updatedCar body models.Car true "Обновленные данные о машине"
+// @Success 200 "Данные о машине успешно обновлены"
+// @Failure 400 "Некорректный запрос"
+// @Failure 500 "Внутренняя ошибка сервера"
 // @Router /update/{id} [put]
 func UpdateCar(w http.ResponseWriter, r *http.Request) {
 	db, err := database.ConnectDB()
@@ -112,6 +126,8 @@ func UpdateCar(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer db.Close()
+
+	logger := logs.GetLogger()
 
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -123,16 +139,19 @@ func UpdateCar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Debug("Данные о машине обновлены")
+
 	w.WriteHeader(http.StatusOK)
 }
 
-// @Summary Удаление машины по id
-// @Description Удалить машину по id
+// @Summary Удаление записи о машине по идентификатору
+// @Description Удаление записи о машине по идентификатору
 // @Tags cars
 // @Accept json
 // @Produce json
-// @Param id path string true "id машины"
-// @Success 200
+// @Param id path string true "Идентификатор машины"
+// @Success 200 "Запись успешно удалена"
+// @Failure 500 "Внутренняя ошибка сервера"
 // @Router /delete/{id} [delete]
 func DeleteCar(w http.ResponseWriter, r *http.Request) {
 	db, err := database.ConnectDB()
@@ -143,6 +162,8 @@ func DeleteCar(w http.ResponseWriter, r *http.Request) {
 
 	defer db.Close()
 
+	logger := logs.GetLogger()
+
 	vars := mux.Vars(r)
 	id := vars["id"]
 
@@ -150,6 +171,8 @@ func DeleteCar(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	logger.Debug("Запись удалена")
 
 	w.WriteHeader(http.StatusOK)
 }

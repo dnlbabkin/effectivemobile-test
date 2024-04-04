@@ -1,8 +1,9 @@
 package main
 
 import (
-	_ "effectivemobile-test/cmd/docs"
+	_ "effectivemobile-test/docs"
 	"effectivemobile-test/internal/handlers"
+	"effectivemobile-test/logs"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -22,6 +23,9 @@ func main() {
 		log.Fatal("Ошибка загрузки .env файла")
 	}
 
+	logger := logs.GetLogger()
+
+	logger.Info("Запуск")
 	router := mux.NewRouter()
 
 	router.HandleFunc("/addCar", handlers.AddCar).Methods("POST")
@@ -30,6 +34,8 @@ func main() {
 	router.HandleFunc("/delete/{id}", handlers.DeleteCar).Methods("DELETE")
 
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	logger.Info("Сервер прослушивается на порту 8080")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
